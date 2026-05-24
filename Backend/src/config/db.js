@@ -5,7 +5,7 @@ import { ENV } from "./env.js";
 export const connectDB = async () => {
   try {
     mongoose.set("strictQuery", true);
-
+    
     const conn = await mongoose.connect(ENV.MONGO_URI, {
       autoIndex: ENV.NODE_ENV !== "production", // disable auto index in prod
     });

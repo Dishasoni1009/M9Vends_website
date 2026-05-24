@@ -1,4 +1,5 @@
 import Application from "../models/application.model.js";
+import { sendCareerNotification } from "../services/mail.service.js";
 
 export const applyCareer = async (req, res) => {
   try {
@@ -6,7 +7,10 @@ export const applyCareer = async (req, res) => {
 
     // Validate input
     if (!name || !email || !phone || !role || !resume_drive_url) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
     }
 
     const application = await Application.create({
@@ -15,8 +19,14 @@ export const applyCareer = async (req, res) => {
       phone,
       role,
       resume_drive_url,
-      // resume: req.file?.path || null,
     });
+
+    // Send email notifications (admin + applicant confirmation)
+    try {
+      await sendCareerNotification({ name, email, phone, role, resume_drive_url });
+    } catch (mailErr) {
+      console.error("Career email failed (application still saved):", mailErr.message);
+    }
 
     return res.status(201).json({
       success: true,
@@ -24,7 +34,7 @@ export const applyCareer = async (req, res) => {
       data: application,
     });
   } catch (error) {
-    console.error(" Career Apply Error:", error);
+    console.error("Career Apply Error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
